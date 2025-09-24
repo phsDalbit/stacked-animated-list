@@ -1,6 +1,5 @@
 library stacked_animated_list;
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked_animated_list/models/circular_linked_list_node.dart';
 import 'package:stacked_animated_list/models/stacked_item.dart';
@@ -82,51 +81,59 @@ class _StackedListWidgetState extends State<StackedListWidget>
 
   @override
   Widget build(BuildContext context) {
+    final centerNode = _listManager.centerNode;
+    if (centerNode == null) {
+      return const SizedBox.shrink();
+    }
+
+    // 1. Get all nodes
     final nodes = _listManager.getAllNodes();
 
+    // 2. Sort them by distance from center, descending. Furthest away first.
+    nodes.sort((a, b) {
+      final distA = a.getDistance(centerNode);
+      final distB = b.getDistance(centerNode);
+      return distB.compareTo(distA);
+    });
+
     return Stack(
-      children: nodes
-          .mapIndexed(
-            (index, node) {
-              final isFirstItem = index == 0;
+      children: nodes.map(
+        (node) {
+          final isFocusedItem = node == centerNode;
 
-              return Center(
-                child: TransformedListItemWidget(
-                  stackedItem: _convertNodeToStackedItem(node),
-                  animation: _increaseAnim!,
-                  widgetWidth: widget.listItemWidth,
-                  focusedWidget: isFirstItem,
-                  borderRadius: widget.borderRadius,
-                  rotationAngle: widget.rotationAngle,
-                  additionalTranslateOffsetBeyondScreen:
-                      widget.additionalTranslateOffsetBeyondScreen,
-                  focusedItemShadow: widget.focusedItemShadow,
-                  onCenterCardClick: widget.onCenterCardClick,
-                  longPressDelay: widget.longPressDelay,
-                  onDragEnded: (bool isDraggingLeft) {
-                    // Circular linked list 회전 - 훨씬 간단!
-                    rotateCircularList(_listManager, isDraggingLeft);
+          return Center(
+            child: TransformedListItemWidget(
+              stackedItem: _convertNodeToStackedItem(node),
+              animation: _increaseAnim!,
+              widgetWidth: widget.listItemWidth,
+              focusedWidget: isFocusedItem,
+              borderRadius: widget.borderRadius,
+              rotationAngle: widget.rotationAngle,
+              additionalTranslateOffsetBeyondScreen:
+                  widget.additionalTranslateOffsetBeyondScreen,
+              focusedItemShadow: widget.focusedItemShadow,
+              onCenterCardClick: widget.onCenterCardClick,
+              longPressDelay: widget.longPressDelay,
+              onDragEnded: (bool isDraggingLeft) {
+                // Circular linked list 회전 - 훨씬 간단!
+                rotateCircularList(_listManager, isDraggingLeft);
 
-                    // 새로운 focused item의 인덱스 업데이트
-                    final newFocusedIndex =
-                        _listManager.centerNode?.baseIndex ?? 0;
+                // 새로운 focused item의 인덱스 업데이트
+                final newFocusedIndex = _listManager.centerNode?.baseIndex ?? 0;
 
-                    // focused item이 변경되었는지 확인하고 콜백 호출
-                    if (newFocusedIndex != _currentFocusedIndex) {
-                      _currentFocusedIndex = newFocusedIndex;
-                      widget.onFocusedItemChanged?.call(_currentFocusedIndex);
-                    }
+                // focused item이 변경되었는지 확인하고 콜백 호출
+                if (newFocusedIndex != _currentFocusedIndex) {
+                  _currentFocusedIndex = newFocusedIndex;
+                  widget.onFocusedItemChanged?.call(_currentFocusedIndex);
+                }
 
-                    _animationCtr?.forward(from: 0);
-                    setState(() {});
-                  },
-                ),
-              );
-            },
-          )
-          .toList()
-          .reversed
-          .toList(),
+                _animationCtr?.forward(from: 0);
+                setState(() {});
+              },
+            ),
+          );
+        },
+      ).toList(),
     );
   }
 
