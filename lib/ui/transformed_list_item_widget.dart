@@ -53,19 +53,22 @@ class _TransformedListItemWidgetState extends State<TransformedListItemWidget>
 
     if (widget.focusedWidget) {
       final childWidget = GestureDetector(
-        behavior: HitTestBehavior.opaque,
         onTap: () {
           if (widget.onCenterCardClick != null) {
             widget.onCenterCardClick!(widget.stackedItem.baseIndex);
           }
         },
-        child: Container(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            boxShadow: widget.focusedItemShadow ?? defaultFocusedItemShadow(),
-            borderRadius: widget.borderRadius,
+        child: Material(
+          color: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              boxShadow: widget.focusedItemShadow ?? defaultFocusedItemShadow(),
+              borderRadius: widget.borderRadius,
+            ),
+            child: widget.stackedItem.widget,
           ),
-          child: widget.stackedItem.widget,
         ),
       );
 

@@ -35,17 +35,21 @@ class UnfocusedTransformedItemWidget extends StatelessWidget
               multiplier * getRotationAngleInRadians(rotationAngle, animation),
           child: Transform.translate(
             offset: getOffsetForUnfocusedItem(horizontalOffset, animation, multiplier),
-            child: Container(
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                borderRadius: borderRadius,
-              ),
-              child: ColorFiltered(
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(animation.value * 0.2),
-                  BlendMode.srcOver,
+            child: Material(
+              color: Colors.transparent,
+              elevation: 0,
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  borderRadius: borderRadius,
                 ),
-                child: stackedItem.widget,
+                child: ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    Colors.black.withOpacity(animation.value * 0.2),
+                    BlendMode.srcOver,
+                  ),
+                  child: stackedItem.widget,
+                ),
               ),
             ),
           ),
