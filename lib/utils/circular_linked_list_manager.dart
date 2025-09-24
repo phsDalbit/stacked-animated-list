@@ -83,10 +83,10 @@ class CircularLinkedListManager {
     if (_centerNode == null) return;
 
     if (isDraggingLeft) {
-      // 왼쪽으로 드래그하면 오른쪽 노드가 새로운 center가 됨 (요청사항 반영)
+      // 왼쪽으로 드래그하면 오른쪽 노드가 새로운 center가 됨
       _centerNode = _centerNode!.next;
     } else {
-      // 오른쪽으로 드래그하면 왼쪽 노드가 새로운 center가 됨 (요청사항 반영)
+      // 오른쪽으로 드래그하면 왼쪽 노드가 새로운 center가 됨
       _centerNode = _centerNode!.previous;
     }
   }

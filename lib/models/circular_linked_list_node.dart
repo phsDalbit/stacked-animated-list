@@ -43,9 +43,9 @@ class CircularLinkedListNode {
 
     // If the list is even, there can be a tie. Arbitrarily choose one side.
     if (rightDistance <= leftDistance) {
-      return ItemPositionType.right;
-    } else {
       return ItemPositionType.left;
+    } else {
+      return ItemPositionType.right;
     }
   }
 
