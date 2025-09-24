@@ -15,6 +15,7 @@ class StackedListWidget extends StatefulWidget {
   final double additionalTranslateOffsetBeyondScreen;
   final List<BoxShadow>? focusedItemShadow;
   final void Function(int index)? onCenterCardClick;
+  final void Function(int index)? onFocusedItemChanged;
   final int longPressDelay;
 
   const StackedListWidget({
@@ -26,6 +27,7 @@ class StackedListWidget extends StatefulWidget {
     this.additionalTranslateOffsetBeyondScreen = 0,
     this.focusedItemShadow,
     this.onCenterCardClick,
+    this.onFocusedItemChanged,
     this.longPressDelay = 400,
     super.key,
   });
@@ -39,6 +41,7 @@ class _StackedListWidgetState extends State<StackedListWidget>
   final List<StackedItem> _stackWidgets = [];
   AnimationController? _animationCtr;
   Animation? _increaseAnim;
+  int _currentFocusedIndex = 0;
 
   @override
   void initState() {
@@ -54,9 +57,19 @@ class _StackedListWidgetState extends State<StackedListWidget>
 
     _stackWidgets.clear();
     _stackWidgets.addAll(generateStackedItems(widget.listItems));
+
+    // 초기 focused item 설정
+    _currentFocusedIndex =
+        _stackWidgets.isNotEmpty ? _stackWidgets[0].baseIndex : 0;
+
     _animationCtr?.forward(from: 0);
 
     super.initState();
+
+    // 첫 번째 프레임 후에 초기 focused item 콜백 호출
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onFocusedItemChanged?.call(_currentFocusedIndex);
+    });
   }
 
   @override
@@ -90,6 +103,18 @@ class _StackedListWidgetState extends State<StackedListWidget>
                     final refreshList = refreshedStackedItems(_stackWidgets);
                     _stackWidgets.clear();
                     _stackWidgets.addAll(refreshList);
+
+                    // 새로운 focused item의 인덱스 업데이트
+                    final newFocusedIndex = _stackWidgets.isNotEmpty
+                        ? _stackWidgets[0].baseIndex
+                        : 0;
+
+                    // focused item이 변경되었는지 확인하고 콜백 호출
+                    if (newFocusedIndex != _currentFocusedIndex) {
+                      _currentFocusedIndex = newFocusedIndex;
+                      widget.onFocusedItemChanged?.call(_currentFocusedIndex);
+                    }
+
                     _animationCtr?.forward(from: 0);
                     setState(() {});
                   },
