@@ -132,9 +132,14 @@ class _StackedListWidgetState extends State<StackedListWidget>
 
   // CircularLinkedListNode를 StackedItem으로 변환 (기존 TransformedListItemWidget과의 호환성)
   StackedItem _convertNodeToStackedItem(CircularLinkedListNode node) {
+    final centerNode = _listManager.centerNode;
+    if (centerNode == null) {
+      throw StateError('Center node is null');
+    }
+
     return StackedItem(
-      positionType: node.positionType,
-      positionTypeForNextItem: node.positionTypeForNextItem,
+      positionType: node.getPositionType(centerNode),
+      positionTypeForNextItem: node.getPositionTypeForNextItem(centerNode),
       widget: node.widget,
       baseIndex: node.baseIndex,
     );

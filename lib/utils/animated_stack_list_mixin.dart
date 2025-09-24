@@ -88,10 +88,15 @@ mixin AnimatedStackListMixin {
   List<StackedItem> convertCircularListToStackedItems(
       CircularLinkedListManager manager) {
     final nodes = manager.getAllNodes();
+    final centerNode = manager.centerNode;
+
+    if (centerNode == null) return [];
+
     return nodes
         .map((node) => StackedItem(
-              positionType: node.positionType,
-              positionTypeForNextItem: node.positionTypeForNextItem,
+              positionType: node.getPositionType(centerNode),
+              positionTypeForNextItem:
+                  node.getPositionTypeForNextItem(centerNode),
               widget: node.widget,
               baseIndex: node.baseIndex,
             ))
