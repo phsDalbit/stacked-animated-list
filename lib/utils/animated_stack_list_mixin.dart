@@ -91,8 +91,27 @@ mixin AnimatedStackListMixin {
     return translateX;
   }
 
-  List<StackedItem> refreshedStackedItems(List<StackedItem> stackedItems) {
+  List<StackedItem> refreshedStackedItems(
+      List<StackedItem> stackedItems, bool isDraggingLeft) {
     final removedItem = stackedItems[0];
+
+    // 드래그 방향에 따라 다음에 중앙으로 올 아이템 결정
+    StackedItem nextCenterItem;
+    if (isDraggingLeft) {
+      // 왼쪽으로 드래그하면 왼쪽 아이템이 중앙으로 옴
+      nextCenterItem = stackedItems.firstWhere(
+        (item) => item.positionType == ItemPositionType.left,
+        orElse: () => stackedItems[1], // fallback
+      );
+    } else {
+      // 오른쪽으로 드래그하면 오른쪽 아이템이 중앙으로 옴
+      nextCenterItem = stackedItems.firstWhere(
+        (item) => item.positionType == ItemPositionType.right,
+        orElse: () => stackedItems[1], // fallback
+      );
+    }
+
+    // 제거된 아이템의 새로운 위치 설정
     final lastItem = stackedItems[stackedItems.length - 1];
     switch (lastItem.positionType) {
       case ItemPositionType.left:
@@ -104,9 +123,14 @@ mixin AnimatedStackListMixin {
     }
     removedItem.positionTypeForNextItem = removedItem.positionType.reverse;
 
+    // 아이템 순서 재배치
+    stackedItems.remove(removedItem);
     stackedItems.insert(stackedItems.length, removedItem);
-    stackedItems.removeAt(0);
-    stackedItems.elementAt(0).positionType = ItemPositionType.center;
+
+    // 다음 중앙 아이템을 맨 앞으로 이동
+    stackedItems.remove(nextCenterItem);
+    stackedItems.insert(0, nextCenterItem);
+    nextCenterItem.positionType = ItemPositionType.center;
 
     return _refreshPositionTypeOfStackedItems(stackedItems);
   }

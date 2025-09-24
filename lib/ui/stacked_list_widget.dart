@@ -99,8 +99,9 @@ class _StackedListWidgetState extends State<StackedListWidget>
                   focusedItemShadow: widget.focusedItemShadow,
                   onCenterCardClick: widget.onCenterCardClick,
                   longPressDelay: widget.longPressDelay,
-                  onDragEnded: () {
-                    final refreshList = refreshedStackedItems(_stackWidgets);
+                  onDragEnded: (bool isDraggingLeft) {
+                    final refreshList =
+                        refreshedStackedItems(_stackWidgets, isDraggingLeft);
                     _stackWidgets.clear();
                     _stackWidgets.addAll(refreshList);
 

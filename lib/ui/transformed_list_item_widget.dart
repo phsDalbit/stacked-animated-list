@@ -3,14 +3,15 @@ import 'package:stacked_animated_list/models/stacked_item.dart';
 import 'package:stacked_animated_list/ui/focused_transformed_item_widget.dart';
 import 'package:stacked_animated_list/ui/unfocused_transformed_item_widget.dart';
 import 'package:stacked_animated_list/utils/animated_stack_list_mixin.dart';
+import 'package:stacked_animated_list/utils/item_position_type.dart';
 
-class TransformedListItemWidget extends StatelessWidget
+class TransformedListItemWidget extends StatefulWidget
     with AnimatedStackListMixin {
   final void Function(int index)? onCenterCardClick;
   final StackedItem stackedItem;
   final double widgetWidth;
   final bool focusedWidget;
-  final Function() onDragEnded;
+  final Function(bool isDraggingLeft) onDragEnded;
   final Animation animation;
   final BorderRadiusGeometry? borderRadius;
   final double rotationAngle;
@@ -34,47 +35,78 @@ class TransformedListItemWidget extends StatelessWidget
   });
 
   @override
+  State<TransformedListItemWidget> createState() =>
+      _TransformedListItemWidgetState();
+}
+
+class _TransformedListItemWidgetState extends State<TransformedListItemWidget>
+    with AnimatedStackListMixin {
+  bool _isDraggingLeft = false;
+
+  @override
   Widget build(BuildContext context) {
     final horizontalOffset = getListItemHorizontalOffset(
       context,
-      widgetWidth,
-      additionalTranslateOffsetBeyondScreen,
+      widget.widgetWidth,
+      widget.additionalTranslateOffsetBeyondScreen,
     );
 
-    if (focusedWidget) {
+    if (widget.focusedWidget) {
       final childWidget = GestureDetector(
         onTap: () {
-          if (onCenterCardClick != null) {
-            onCenterCardClick!(stackedItem.baseIndex);
+          if (widget.onCenterCardClick != null) {
+            widget.onCenterCardClick!(widget.stackedItem.baseIndex);
           }
         },
         child: Container(
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            boxShadow: focusedItemShadow ?? defaultFocusedItemShadow(),
-            borderRadius: borderRadius,
+            boxShadow: widget.focusedItemShadow ?? defaultFocusedItemShadow(),
+            borderRadius: widget.borderRadius,
           ),
-          child: stackedItem.widget,
+          child: widget.stackedItem.widget,
         ),
       );
 
-      final animatedFromPosType = stackedItem.positionTypeForNextItem.reverse;
+      // 드래그 방향에 따라 애니메이션 방향 결정
+      final animatedFromPosType =
+          _isDraggingLeft ? ItemPositionType.left : ItemPositionType.right;
 
       return AnimatedBuilder(
-        animation: animation,
+        animation: widget.animation,
         child: LongPressDraggable(
           feedback: childWidget,
           childWhenDragging: const SizedBox.shrink(),
-          delay: Duration(milliseconds: longPressDelay),
+          delay: Duration(milliseconds: widget.longPressDelay),
           child: childWidget,
+          onDragStarted: () {
+            // 드래그 시작 시 방향 감지
+            setState(() {
+              _isDraggingLeft = false; // 기본값
+            });
+          },
+          onDragUpdate: (details) {
+            // 드래그 중 방향 감지
+            setState(() {
+              _isDraggingLeft = details.delta.dx < 0;
+            });
+          },
           onDragEnd: (details) {
-            if (isItemFlicked(details)) onDragEnded();
+            if (isItemFlicked(details)) {
+              // 드래그 방향에 따라 최종 방향 결정
+              final finalDragDirection =
+                  details.velocity.pixelsPerSecond.dx < 0;
+              setState(() {
+                _isDraggingLeft = finalDragDirection;
+              });
+              widget.onDragEnded(finalDragDirection);
+            }
           },
         ),
         builder: (_, child) {
           return FocusedTransformedItemWidget(
-            animation: animation,
-            rotationAngle: rotationAngle,
+            animation: widget.animation,
+            rotationAngle: widget.rotationAngle,
             horizontalOffset: horizontalOffset,
             positionType: animatedFromPosType,
             child: child!,
@@ -84,12 +116,12 @@ class TransformedListItemWidget extends StatelessWidget
     }
 
     return UnfocusedTransformedItemWidget(
-      stackedItem: stackedItem,
-      animation: animation,
-      rotationAngle: rotationAngle,
+      stackedItem: widget.stackedItem,
+      animation: widget.animation,
+      rotationAngle: widget.rotationAngle,
       horizontalOffset: horizontalOffset,
-      borderRadius: borderRadius,
-      positionType: stackedItem.positionType,
+      borderRadius: widget.borderRadius,
+      positionType: widget.stackedItem.positionType,
     );
   }
 }

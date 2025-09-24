@@ -21,6 +21,9 @@ class FocusedTransformedItemWidget extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
+    // 드래그 방향에 따라 multiplier 결정
+    // 왼쪽으로 드래그하면 왼쪽 아이템이 중앙으로 오므로 multiplier = 1
+    // 오른쪽으로 드래그하면 오른쪽 아이템이 중앙으로 오므로 multiplier = -1
     final multiplier = (positionType == ItemPositionType.left ? 1 : -1);
 
     return Transform.rotate(
