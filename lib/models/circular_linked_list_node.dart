@@ -19,30 +19,52 @@ class CircularLinkedListNode {
       return ItemPositionType.center;
     }
 
-    // center 노드에서 현재 노드까지의 거리 계산
-    int distance = 0;
+    // center 노드의 이전 노드인지 확인 (left)
+    if (this == centerNode.previous) {
+      return ItemPositionType.left;
+    }
+
+    // center 노드의 다음 노드인지 확인 (right)
+    if (this == centerNode.next) {
+      return ItemPositionType.right;
+    }
+
+    // 그 외의 경우는 center에서 더 멀리 떨어진 노드들
+    // center에서 오른쪽으로 몇 번째인지 확인
+    int rightDistance = 0;
     CircularLinkedListNode current = centerNode;
 
-    // 오른쪽으로 검색
-    while (current != this && distance < 10) {
+    while (current != this && rightDistance < 10) {
       // 무한 루프 방지
       current = current.next!;
-      distance++;
+      rightDistance++;
     }
 
     if (current == this) {
-      return distance % 2 == 1 ? ItemPositionType.right : ItemPositionType.left;
+      // 오른쪽에 있는 노드들: distance가 홀수면 right, 짝수면 left
+      return rightDistance % 2 == 1
+          ? ItemPositionType.right
+          : ItemPositionType.left;
     }
 
-    // 왼쪽으로 검색
-    distance = 0;
+    // center에서 왼쪽으로 몇 번째인지 확인
+    int leftDistance = 0;
     current = centerNode;
-    while (current != this && distance < 10) {
+
+    while (current != this && leftDistance < 10) {
       current = current.previous!;
-      distance++;
+      leftDistance++;
     }
 
-    return distance % 2 == 1 ? ItemPositionType.left : ItemPositionType.right;
+    if (current == this) {
+      // 왼쪽에 있는 노드들: distance가 홀수면 left, 짝수면 right
+      return leftDistance % 2 == 1
+          ? ItemPositionType.left
+          : ItemPositionType.right;
+    }
+
+    // 기본값 (이론적으로 도달하지 않아야 함)
+    return ItemPositionType.left;
   }
 
   // center 노드 기준으로 다음 아이템의 위치 타입 계산
