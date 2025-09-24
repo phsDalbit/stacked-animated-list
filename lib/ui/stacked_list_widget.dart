@@ -2,9 +2,11 @@ library stacked_animated_list;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:stacked_animated_list/models/circular_linked_list_node.dart';
 import 'package:stacked_animated_list/models/stacked_item.dart';
 import 'package:stacked_animated_list/ui/transformed_list_item_widget.dart';
 import 'package:stacked_animated_list/utils/animated_stack_list_mixin.dart';
+import 'package:stacked_animated_list/utils/circular_linked_list_manager.dart';
 
 class StackedListWidget extends StatefulWidget {
   final List<Widget> listItems;
@@ -38,7 +40,7 @@ class StackedListWidget extends StatefulWidget {
 
 class _StackedListWidgetState extends State<StackedListWidget>
     with SingleTickerProviderStateMixin, AnimatedStackListMixin {
-  final List<StackedItem> _stackWidgets = [];
+  late CircularLinkedListManager _listManager;
   AnimationController? _animationCtr;
   Animation? _increaseAnim;
   int _currentFocusedIndex = 0;
@@ -55,12 +57,11 @@ class _StackedListWidgetState extends State<StackedListWidget>
       end: 1,
     ).animate(CurvedAnimation(parent: _animationCtr!, curve: Curves.easeOut));
 
-    _stackWidgets.clear();
-    _stackWidgets.addAll(generateStackedItems(widget.listItems));
+    // Circular linked list 생성
+    _listManager = createCircularLinkedList(widget.listItems);
 
     // 초기 focused item 설정
-    _currentFocusedIndex =
-        _stackWidgets.isNotEmpty ? _stackWidgets[0].baseIndex : 0;
+    _currentFocusedIndex = _listManager.centerNode?.baseIndex ?? 0;
 
     _animationCtr?.forward(from: 0);
 
@@ -75,20 +76,23 @@ class _StackedListWidgetState extends State<StackedListWidget>
   @override
   void dispose() {
     _animationCtr?.dispose();
+    _listManager.clear();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final nodes = _listManager.getAllNodes();
+
     return Stack(
-      children: _stackWidgets
+      children: nodes
           .mapIndexed(
-            (index, item) {
+            (index, node) {
               final isFirstItem = index == 0;
 
               return Center(
                 child: TransformedListItemWidget(
-                  stackedItem: item,
+                  stackedItem: _convertNodeToStackedItem(node),
                   animation: _increaseAnim!,
                   widgetWidth: widget.listItemWidth,
                   focusedWidget: isFirstItem,
@@ -100,15 +104,12 @@ class _StackedListWidgetState extends State<StackedListWidget>
                   onCenterCardClick: widget.onCenterCardClick,
                   longPressDelay: widget.longPressDelay,
                   onDragEnded: (bool isDraggingLeft) {
-                    final refreshList =
-                        refreshedStackedItems(_stackWidgets, isDraggingLeft);
-                    _stackWidgets.clear();
-                    _stackWidgets.addAll(refreshList);
+                    // Circular linked list 회전 - 훨씬 간단!
+                    rotateCircularList(_listManager, isDraggingLeft);
 
                     // 새로운 focused item의 인덱스 업데이트
-                    final newFocusedIndex = _stackWidgets.isNotEmpty
-                        ? _stackWidgets[0].baseIndex
-                        : 0;
+                    final newFocusedIndex =
+                        _listManager.centerNode?.baseIndex ?? 0;
 
                     // focused item이 변경되었는지 확인하고 콜백 호출
                     if (newFocusedIndex != _currentFocusedIndex) {
@@ -126,6 +127,16 @@ class _StackedListWidgetState extends State<StackedListWidget>
           .toList()
           .reversed
           .toList(),
+    );
+  }
+
+  // CircularLinkedListNode를 StackedItem으로 변환 (기존 TransformedListItemWidget과의 호환성)
+  StackedItem _convertNodeToStackedItem(CircularLinkedListNode node) {
+    return StackedItem(
+      positionType: node.positionType,
+      positionTypeForNextItem: node.positionTypeForNextItem,
+      widget: node.widget,
+      baseIndex: node.baseIndex,
     );
   }
 }
