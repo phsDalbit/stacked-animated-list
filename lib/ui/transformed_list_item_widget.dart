@@ -52,14 +52,13 @@ class _TransformedListItemWidgetState extends State<TransformedListItemWidget>
     );
 
     if (widget.focusedWidget) {
-      final childWidget = InkWell(
+      final childWidget = GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           if (widget.onCenterCardClick != null) {
             widget.onCenterCardClick!(widget.stackedItem.baseIndex);
           }
         },
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
         child: Container(
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
